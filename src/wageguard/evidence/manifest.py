@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import date
 from enum import StrEnum
 from pathlib import Path
 
@@ -19,6 +20,7 @@ from wageguard.domain.enums import Topic
 from wageguard.domain.errors import ConfigurationError
 from wageguard.domain.identifiers import SourceKey
 from wageguard.domain.jurisdiction import Jurisdiction, jurisdiction
+from wageguard.domain.ranges import EffectiveRange
 
 
 class SourceType(StrEnum):
@@ -44,6 +46,10 @@ class SourceSpec:
     source_type: SourceType
     fetch_method: FetchMethod
     notes: str = ""
+    # Validity window for date-based retrieval filtering. None means
+    # "assumed valid at any date", which is the default for the
+    # prototype's single-snapshot corpus.
+    validity: EffectiveRange | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -121,6 +127,32 @@ def _parse_source(idx: int, row: object) -> SourceSpec:
     if not isinstance(notes_raw, str):
         raise ConfigurationError(f"source[{idx}].notes: must be a string")
 
+    validity_raw = row.get("validity")
+    validity: EffectiveRange | None = None
+    if isinstance(validity_raw, dict):
+        start_raw = validity_raw.get("start")
+        end_raw = validity_raw.get("end")
+        if not isinstance(start_raw, str):
+            raise ConfigurationError(f"source[{idx}].validity.start: required ISO date string")
+        try:
+            start = date.fromisoformat(start_raw)
+        except ValueError as exc:
+            raise ConfigurationError(f"source[{idx}].validity.start: {exc}") from exc
+        if end_raw is None:
+            end: date | None = None
+        elif isinstance(end_raw, str):
+            try:
+                end = date.fromisoformat(end_raw)
+            except ValueError as exc:
+                raise ConfigurationError(f"source[{idx}].validity.end: {exc}") from exc
+        else:
+            raise ConfigurationError(
+                f"source[{idx}].validity.end: must be null or an ISO date string"
+            )
+        validity = EffectiveRange(start, end)
+    elif validity_raw is not None:
+        raise ConfigurationError(f"source[{idx}].validity: must be a mapping or null")
+
     return SourceSpec(
         source_key=SourceKey(source_key),
         publisher=publisher,
@@ -131,4 +163,5 @@ def _parse_source(idx: int, row: object) -> SourceSpec:
         source_type=source_type,
         fetch_method=fetch_method,
         notes=notes_raw,
+        validity=validity,
     )

@@ -105,6 +105,9 @@ ignore = [
 # the alternative is a ladder of typed accessors on RawFacts.values,
 # which Phase 2 deliberately kept open-ended.
 "src/wageguard/interfaces/service.py" = ["S101", "PLR0911"]
+# manifest._parse_source is a strict YAML parser; branches are the
+# per-field checks from the manifest schema.
+"src/wageguard/evidence/manifest.py" = ["PLR0912", "PLR0915"]
 # File-backed ledger reads back untyped JSON; isinstance narrowings
 # are the local trust boundary.
 "src/wageguard/ledger/file_repository.py" = ["S101"]

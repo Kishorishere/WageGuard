@@ -109,11 +109,13 @@ class InMemoryEvidenceRetriever:
             spec = self._store.spec_for(source_key)
             if spec is None:
                 continue
-            # Hard filter: jurisdiction, topic. Date filter is a no-op
-            # until source-version validity windows ship (Phase 4+).
+            # Hard filter: jurisdiction, topic, and source-version
+            # date validity — all applied BEFORE similarity ranking.
             if spec.jurisdiction not in q.jurisdictions:
                 continue
             if q.topic not in spec.topics:
+                continue
+            if spec.validity is not None and not spec.validity.contains(q.as_of):
                 continue
             last = self._store.last_version_for(source_key)
             if last is None:

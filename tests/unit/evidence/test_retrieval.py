@@ -30,7 +30,13 @@ from wageguard.evidence.retrieval import (
 from wageguard.evidence.store import InMemoryPassageStore, SourceVersion
 
 
-def _spec(source_key: str, jur: str, topic: Topic = Topic.MINIMUM_WAGE) -> SourceSpec:
+def _spec(
+    source_key: str,
+    jur: str,
+    topic: Topic = Topic.MINIMUM_WAGE,
+    *,
+    validity: object | None = None,
+) -> SourceSpec:
     return SourceSpec(
         source_key=SourceKey(source_key),
         publisher="p",
@@ -40,6 +46,7 @@ def _spec(source_key: str, jur: str, topic: Topic = Topic.MINIMUM_WAGE) -> Sourc
         topics=(topic,),
         source_type=SourceType.AGENCY_GUIDANCE,
         fetch_method=FetchMethod.HTML,
+        validity=validity,  # type: ignore[arg-type]
     )
 
 
@@ -137,6 +144,31 @@ class TestHardFiltersBeforeRanking:
         hits = retriever.search(_default_query("exact query text", ["US"]))
         for h in hits:
             assert "state" not in str(h.passage.passage_id)
+
+    def test_source_outside_validity_never_returned(self) -> None:
+        # A source valid only 2020..2023 must not appear for an
+        # as_of in 2024.
+        from wageguard.domain.ranges import EffectiveRange
+
+        store = InMemoryPassageStore()
+        _seed(
+            store,
+            [
+                (
+                    _spec(
+                        "old",
+                        "US",
+                        validity=EffectiveRange(date(2020, 1, 1), date(2024, 1, 1)),
+                    ),
+                    ["old passage"],
+                ),
+            ],
+        )
+        retriever = InMemoryEvidenceRetriever(
+            store, DeterministicFakeEmbedder(EmbeddingModelId("fake-r-v1"), 8)
+        )
+        hits = retriever.search(_default_query("old passage", ["US"]))
+        assert hits == ()
 
     def test_wrong_topic_never_returned(self) -> None:
         store = InMemoryPassageStore()
