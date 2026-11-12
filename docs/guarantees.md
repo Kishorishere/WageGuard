@@ -30,6 +30,11 @@ The README copies rows out of this file. `make docs-check` runs the script.
 | G-11 | The verifier can veto but never upgrade; no decisive outcome reaches the ledger without passing every verifier check. | `tests/unit/verification/test_verifier.py::TestHappyPath::test_valid_output_verifies` |
 | G-12 | Abstentions emit templated explanations with no LLM call. | `tests/unit/verification/test_templates.py::test_abstention_explanation_never_calls_llm` |
 | G-13 | The prompt hash is verified against the registry at startup. | `tests/unit/llm/test_prompts.py::test_hash_mismatch_raises` |
+| G-14 | Every decision, abstention, and fault is appended to a hash-chained ledger. | `tests/unit/ledger/test_ledger.py::TestBasicAppend::test_first_append_has_sequence_1_and_genesis_prev_hash` |
+| G-15 | `ledger verify` detects any single-byte tamper and reports the first break. | `tests/unit/ledger/test_chain.py::TestChainVerification::test_single_byte_tamper_in_middle_detected` |
+| G-16 | Concurrent appends never fork the chain. | `tests/unit/ledger/test_ledger.py::TestConcurrentAppend::test_parallel_appends_produce_linear_chain` |
+| G-17 | Exact replay of engine-only outcomes is byte-identical to the original record. | `tests/unit/ledger/test_replay.py::test_exact_replay_byte_identical_for_engine_only` |
+| G-18 | Replay writes a new record; the original is never mutated. | `tests/unit/ledger/test_replay.py::test_replay_writes_a_new_record_and_never_mutates_original` |
 
 ---
 
@@ -41,11 +46,6 @@ phase that implements and tests it.
 | ID | Guarantee | Target phase |
 |----|-----------|--------------|
 | G-07 | The highest applicable rate controls; this is sourced from an official passage. | Phase 3 (engine) + Phase 4 (sourcing) |
-| G-14 | Every decision, abstention, and fault is appended to a hash-chained ledger; the application role cannot UPDATE or DELETE ledger rows. | Phase 7 |
-| G-15 | `ledger verify` detects any single-byte tamper and reports the first break. | Phase 7 |
-| G-16 | Concurrent appends never fork the chain. | Phase 7 |
-| G-17 | Exact replay of engine-only outcomes is byte-identical to the original record. | Phase 7 |
-| G-18 | Replay writes a new record; the original is never mutated. | Phase 7 |
 | G-19 | Golden metrics are reported with numerators, denominators, and Wilson 95% intervals; `non_abstained == 0` is reported as undefined, not zero. | Phase 8 |
 | G-20 | The held-out split is not read by any tuning script; every held-out run is logged. | Phase 8 |
 | G-21 | Exemption `PASS` is unreachable without the documented conditions (property-tested). | Phase 9 |

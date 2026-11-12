@@ -45,7 +45,7 @@ class TestDateTime:
         assert to_canonical_dict(date(2024, 7, 1)) == "2024-07-01"
 
     def test_naive_datetime_raises(self) -> None:
-        with pytest.raises(ValueError, match="tz"):
+        with pytest.raises(ValueError, match="timezone"):
             to_canonical_dict(datetime(2024, 7, 1, 12, 0, 0))  # noqa: DTZ001
 
     def test_aware_datetime_rfc3339_utc(self) -> None:
