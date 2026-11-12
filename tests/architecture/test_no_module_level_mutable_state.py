@@ -48,6 +48,7 @@ _ALLOWED_MODULE_LEVEL_CALLS = frozenset(
         "compile",  # re.compile(...) returns an immutable Pattern object
         "sha256",  # hashlib.sha256() is a ctor; usage is pure
         "field",  # dataclasses.field(...) is a descriptor spec
+        "maketrans",  # type-system constructor; no runtime side effect
     }
 )
 

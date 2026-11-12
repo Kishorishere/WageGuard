@@ -27,6 +27,9 @@ The README copies rows out of this file. `make docs-check` runs the script.
 | G-08 | Corpus ingestion is deterministic: identical snapshot bytes produce identical passage IDs. | `tests/unit/evidence/test_chunking.py::TestDeterminism::test_same_bytes_produce_identical_passages` |
 | G-09 | Retrieval applies jurisdiction/topic/date filters **before** ranking; a wrong-jurisdiction passage cannot be returned. | `tests/unit/evidence/test_retrieval.py::TestHardFiltersBeforeRanking::test_wrong_jurisdiction_never_returned` |
 | G-10 | Required citations come from the engine, not from retrieval. | `tests/unit/evidence/test_retrieval.py::TestBundle::test_required_passages_lead_the_bundle` |
+| G-11 | The verifier can veto but never upgrade; no decisive outcome reaches the ledger without passing every verifier check. | `tests/unit/verification/test_verifier.py::TestHappyPath::test_valid_output_verifies` |
+| G-12 | Abstentions emit templated explanations with no LLM call. | `tests/unit/verification/test_templates.py::test_abstention_explanation_never_calls_llm` |
+| G-13 | The prompt hash is verified against the registry at startup. | `tests/unit/llm/test_prompts.py::test_hash_mismatch_raises` |
 
 ---
 
@@ -38,9 +41,6 @@ phase that implements and tests it.
 | ID | Guarantee | Target phase |
 |----|-----------|--------------|
 | G-07 | The highest applicable rate controls; this is sourced from an official passage. | Phase 3 (engine) + Phase 4 (sourcing) |
-| G-11 | The verifier can veto but never upgrade; no decisive outcome reaches the ledger without passing every verifier check. | Phase 6 |
-| G-12 | Abstentions emit templated explanations with no LLM call. | Phase 6 |
-| G-13 | The prompt hash is verified against the registry at startup. | Phase 6 |
 | G-14 | Every decision, abstention, and fault is appended to a hash-chained ledger; the application role cannot UPDATE or DELETE ledger rows. | Phase 7 |
 | G-15 | `ledger verify` detects any single-byte tamper and reports the first break. | Phase 7 |
 | G-16 | Concurrent appends never fork the chain. | Phase 7 |

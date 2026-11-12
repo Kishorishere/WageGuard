@@ -78,6 +78,11 @@ ignore = [
 # public API. Renaming them to InputRejectedError etc. would diverge from
 # the specification without a review benefit.
 "src/wageguard/domain/errors.py" = ["N818"]
+# PLR0912 (too many branches) fires on the verifier's main function. The
+# verifier's job is to run eight sequential checks and collect every
+# failure before returning; splitting the function obscures the
+# "ordered-checks" structure spec §12.4 pins down. Keep one function.
+"src/wageguard/verification/verifier.py" = ["PLR0912"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["wageguard"]

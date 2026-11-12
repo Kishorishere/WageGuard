@@ -20,6 +20,7 @@ _FORBIDDEN_FOR_DOMAIN = frozenset(
     {
         "wageguard.llm",
         "wageguard.evidence",
+        "wageguard.verification",
         "wageguard.interfaces",
         "wageguard.ledger.repository",  # the DB adapter; canonical is pure
         "wageguard.ledger.chain",
