@@ -122,6 +122,30 @@ def test_readyz_passes_on_healthy_build() -> None:
     assert r.json()["ruleset_hash"] == "ok"
 
 
+def test_readyz_fails_on_prompt_hash_mismatch(
+    tmp_path: object, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Negative path for G-25: /readyz reports 503 when the prompt
+    registry's recorded hash does not match the on-disk prompt."""
+    # Monkey-patch load_registry to raise ConfigurationError, which
+    # the readyz handler surfaces via its broad except.
+    import wageguard.interfaces.api as api_mod
+    from wageguard.domain.errors import ConfigurationError
+    from wageguard.llm import prompts as prompts_mod
+
+    def _boom(*args: object, **kwargs: object) -> object:
+        raise ConfigurationError("prompt hash mismatch (injected)")
+
+    monkeypatch.setattr(prompts_mod, "load_registry", _boom)
+    monkeypatch.setattr(api_mod, "load_registry", _boom, raising=False)
+
+    app, _key, _ = _app_with_keys()
+    client = TestClient(app)
+    r = client.get("/readyz")
+    assert r.status_code == 503
+    assert "fail" in r.json()["prompt_hash"].lower()
+
+
 def test_get_decision_404_on_unknown_id() -> None:
     app, key, _ = _app_with_keys()
     client = TestClient(app)

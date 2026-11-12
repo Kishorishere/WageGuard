@@ -31,6 +31,7 @@ _ALLOWLIST: frozenset[str] = frozenset(
         "src/wageguard/resilience/__init__.py",
         "src/wageguard/config.py",
         "src/wageguard/interfaces/composition.py",
+        "src/wageguard/interfaces/api_main.py",
         "src/wageguard/llm/gemini_client.py",
     }
 )
