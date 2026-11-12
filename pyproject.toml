@@ -13,6 +13,7 @@ authors = [{ name = "WageGuard" }]
 # together with the tests that justify them.
 dependencies = [
     "pydantic==2.9.2",
+    "pyyaml==6.0.2",
 ]
 
 [project.optional-dependencies]
@@ -25,6 +26,7 @@ dev = [
     "hypothesis==6.112.1",
     "pip-audit==2.7.3",
     "pre-commit==3.8.0",
+    "types-pyyaml==6.0.12.20240917",
 ]
 
 [project.scripts]

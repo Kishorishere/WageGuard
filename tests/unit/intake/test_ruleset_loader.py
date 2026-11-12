@@ -73,6 +73,88 @@ def test_rejects_missing_ruleset_version(tmp_path: Path) -> None:
         load_ruleset_from_yaml(_write(tmp_path, "mw.yaml", body))
 
 
+def test_rejects_malformed_yaml(tmp_path: Path) -> None:
+    with pytest.raises(ConfigurationError, match="malformed YAML"):
+        load_ruleset_from_yaml(_write(tmp_path, "mw.yaml", ": : :"))
+
+
+def test_rejects_non_mapping_top_level(tmp_path: Path) -> None:
+    with pytest.raises(ConfigurationError, match="must be a mapping"):
+        load_ruleset_from_yaml(_write(tmp_path, "mw.yaml", "- just a list"))
+
+
+def test_rejects_empty_rules_list(tmp_path: Path) -> None:
+    body = 'ruleset_version: "v1"\nrules: []\n'
+    with pytest.raises(ConfigurationError, match="rules must be a non-empty list"):
+        load_ruleset_from_yaml(_write(tmp_path, "mw.yaml", body))
+
+
+def test_rejects_rule_row_not_a_mapping(tmp_path: Path) -> None:
+    body = 'ruleset_version: "v1"\nrules:\n  - "not a mapping"\n'
+    with pytest.raises(ConfigurationError, match=r"rule\[0\]: must be a mapping"):
+        load_ruleset_from_yaml(_write(tmp_path, "mw.yaml", body))
+
+
+def test_rejects_non_parseable_decimal_string(tmp_path: Path) -> None:
+    body = _GOOD.replace('value: "7.00"', 'value: "abc"')
+    with pytest.raises(ConfigurationError, match="not a valid decimal"):
+        load_ruleset_from_yaml(_write(tmp_path, "mw.yaml", body))
+
+
+def test_rejects_invalid_jurisdiction_code(tmp_path: Path) -> None:
+    body = _GOOD.replace('jurisdiction: "US"', 'jurisdiction: "usa"')
+    with pytest.raises(ConfigurationError, match="jurisdiction"):
+        load_ruleset_from_yaml(_write(tmp_path, "mw.yaml", body))
+
+
+def test_rejects_unknown_topic(tmp_path: Path) -> None:
+    body = _GOOD.replace('topic: "minimum_wage"', 'topic: "overtime"')
+    with pytest.raises(ConfigurationError, match="topic"):
+        load_ruleset_from_yaml(_write(tmp_path, "mw.yaml", body))
+
+
+def test_rejects_unknown_worker_category(tmp_path: Path) -> None:
+    body = _GOOD.replace('worker_category: "general"', 'worker_category: "robot"')
+    with pytest.raises(ConfigurationError, match="worker_category"):
+        load_ruleset_from_yaml(_write(tmp_path, "mw.yaml", body))
+
+
+def test_rejects_non_iso_effective_from(tmp_path: Path) -> None:
+    body = _GOOD.replace('effective_from: "2020-01-01"', 'effective_from: "01/01/2020"')
+    with pytest.raises(ConfigurationError, match="effective_from"):
+        load_ruleset_from_yaml(_write(tmp_path, "mw.yaml", body))
+
+
+def test_rejects_effective_to_wrong_type(tmp_path: Path) -> None:
+    body = _GOOD.replace("effective_to: null", "effective_to: 123")
+    with pytest.raises(ConfigurationError, match="effective_to"):
+        load_ruleset_from_yaml(_write(tmp_path, "mw.yaml", body))
+
+
+def test_rejects_non_iso_effective_to(tmp_path: Path) -> None:
+    body = _GOOD.replace("effective_to: null", 'effective_to: "garbage"')
+    with pytest.raises(ConfigurationError, match="effective_to"):
+        load_ruleset_from_yaml(_write(tmp_path, "mw.yaml", body))
+
+
+def test_rejects_passage_not_a_string(tmp_path: Path) -> None:
+    body = _GOOD.replace('"fake_src@v1#p000"', "123")
+    with pytest.raises(ConfigurationError, match="supporting_passages"):
+        load_ruleset_from_yaml(_write(tmp_path, "mw.yaml", body))
+
+
+def test_rejects_notes_not_a_string(tmp_path: Path) -> None:
+    body = _GOOD + "    notes: 42\n"
+    with pytest.raises(ConfigurationError, match="notes"):
+        load_ruleset_from_yaml(_write(tmp_path, "mw.yaml", body))
+
+
+def test_rejects_zero_length_effective_range(tmp_path: Path) -> None:
+    body = _GOOD.replace("effective_to: null", 'effective_to: "2020-01-01"')
+    with pytest.raises(ConfigurationError, match="effective"):
+        load_ruleset_from_yaml(_write(tmp_path, "mw.yaml", body))
+
+
 def test_rejects_overlapping_rules(tmp_path: Path) -> None:
     body = (
         _GOOD
