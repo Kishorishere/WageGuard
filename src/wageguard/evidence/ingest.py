@@ -47,6 +47,7 @@ def ingest(
 
     results: list[IngestResult] = []
     for spec in manifest.sources:
+        store.register_source_spec(spec)
         location = read_current_snapshot(snapshots_dir, spec.source_key)
         if location is None:
             raise EvidenceError(

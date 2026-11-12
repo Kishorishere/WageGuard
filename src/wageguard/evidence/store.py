@@ -15,6 +15,7 @@ from typing import Protocol
 from wageguard.domain.errors import ConfigurationError
 from wageguard.domain.identifiers import ContentHash, EmbeddingModelId, SourceKey
 from wageguard.evidence.chunking import Passage
+from wageguard.evidence.manifest import SourceSpec
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,6 +28,7 @@ class SourceVersion:
 
 class PassageStore(Protocol):
     def register_embedding_model(self, model_id: EmbeddingModelId, dimension: int) -> None: ...
+    def register_source_spec(self, spec: SourceSpec) -> None: ...
     def store_passages(
         self,
         source_version: SourceVersion,
@@ -35,6 +37,7 @@ class PassageStore(Protocol):
     ) -> None: ...
     def last_version_for(self, source_key: SourceKey) -> SourceVersion | None: ...
     def passage_count_for(self, source_key: SourceKey, version_no: int) -> int: ...
+    def spec_for(self, source_key: SourceKey) -> SourceSpec | None: ...
 
 
 class InMemoryPassageStore:
@@ -43,10 +46,16 @@ class InMemoryPassageStore:
         self._dimension: int | None = None
         self._versions: dict[SourceKey, list[SourceVersion]] = {}
         self._passages: dict[tuple[SourceKey, int], list[Passage]] = {}
+        self._embeddings: dict[tuple[SourceKey, int], list[tuple[float, ...]]] = {}
+        self._specs: dict[SourceKey, SourceSpec] = {}
 
     @property
     def model_id(self) -> EmbeddingModelId | None:
         return self._model_id
+
+    @property
+    def dimension(self) -> int | None:
+        return self._dimension
 
     def register_embedding_model(self, model_id: EmbeddingModelId, dimension: int) -> None:
         if self._model_id is None:
@@ -58,6 +67,12 @@ class InMemoryPassageStore:
                 f"embedding model mismatch: store has "
                 f"{self._model_id}@{self._dimension}, received {model_id}@{dimension}"
             )
+
+    def register_source_spec(self, spec: SourceSpec) -> None:
+        self._specs[spec.source_key] = spec
+
+    def spec_for(self, source_key: SourceKey) -> SourceSpec | None:
+        return self._specs.get(source_key)
 
     def store_passages(
         self,
@@ -74,8 +89,10 @@ class InMemoryPassageStore:
                 raise ConfigurationError(
                     f"embedding has dimension {len(emb)}, store expects {self._dimension}"
                 )
+        key = (source_version.source_key, source_version.version_no)
         self._versions.setdefault(source_version.source_key, []).append(source_version)
-        self._passages[(source_version.source_key, source_version.version_no)] = list(passages)
+        self._passages[key] = list(passages)
+        self._embeddings[key] = list(embeddings)
 
     def last_version_for(self, source_key: SourceKey) -> SourceVersion | None:
         versions = self._versions.get(source_key)
@@ -85,3 +102,14 @@ class InMemoryPassageStore:
 
     def passage_count_for(self, source_key: SourceKey, version_no: int) -> int:
         return len(self._passages.get((source_key, version_no), ()))
+
+    # --- read side (used by InMemoryEvidenceRetriever; not on the Protocol) ---
+
+    def _passages_for(
+        self, source_key: SourceKey, version_no: int
+    ) -> tuple[list[Passage], list[tuple[float, ...]]]:
+        key = (source_key, version_no)
+        return self._passages.get(key, []), self._embeddings.get(key, [])
+
+    def _all_source_keys(self) -> tuple[SourceKey, ...]:
+        return tuple(self._versions.keys())
