@@ -13,8 +13,11 @@ authors = [{ name = "WageGuard" }]
 # together with the tests that justify them.
 dependencies = [
     "pydantic==2.9.2",
+    "pydantic-settings==2.5.2",
     "pyyaml==6.0.2",
     "beautifulsoup4==4.12.3",
+    "fastapi==0.115.0",
+    "httpx==0.27.2",
 ]
 
 [project.optional-dependencies]
@@ -91,6 +94,18 @@ ignore = [
 # scoring.classify is a case table (spec §14.3). The branches ARE the
 # table; splitting them hides the exhaustive classification structure.
 "src/wageguard/evaluation/scoring.py" = ["PLR0911"]
+# The CLI writes human + JSON output to stdout/stderr by design; T201
+# is noise in a module whose purpose is printing.
+"src/wageguard/interfaces/cli.py" = ["T201", "BLE001", "ANN202"]
+# API top-level boundary converts arbitrary errors to HTTP 503.
+"src/wageguard/interfaces/api.py" = ["BLE001"]
+# Service uses isinstance asserts for type narrowing on dict reads;
+# the alternative is a ladder of typed accessors on RawFacts.values,
+# which Phase 2 deliberately kept open-ended.
+"src/wageguard/interfaces/service.py" = ["S101"]
+"src/wageguard/interfaces/composition.py" = ["ANN202"]
+# HTTP status range 400..600 is standard and self-documenting.
+"src/wageguard/llm/gemini_client.py" = ["PLR2004"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["wageguard"]
@@ -146,7 +161,12 @@ addopts = [
     "--strict-config",
     "-p", "no:cacheprovider",
 ]
-filterwarnings = ["error"]
+filterwarnings = [
+    "error",
+    # Transitive deprecation from starlette<->anyio alias; fires at
+    # test-client import. Revisit when the versions bump.
+    "ignore:The anyio.abc.BlockingPortal alias is deprecated:DeprecationWarning",
+]
 xfail_strict = true
 
 # --------------------------------------------------------------------------
