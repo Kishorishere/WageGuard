@@ -22,7 +22,12 @@ from wageguard.domain.ranges import EffectiveRange
 from wageguard.interfaces.service import CheckService, ServiceConfig
 from wageguard.ledger.file_repository import FileBackedLedgerRepository
 from wageguard.ledger.repository import InMemoryLedgerRepository, LedgerRepository
+from wageguard.llm.prompts import PromptRegistry, load_registry
 from wageguard.resilience.clock import Clock, SystemClock
+
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+_PROMPTS_DIR = _REPO_ROOT / "prompts"
+_PROMPTS_REGISTRY = _REPO_ROOT / "prompts" / "registry.yaml"
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,6 +36,7 @@ class CompositionArtifacts:
     ledger_repo: LedgerRepository
     rules: Ruleset
     settings: Settings
+    prompts: PromptRegistry
 
 
 def _sequential_id_factory(prefix: str = "d-"):  # type: ignore[no-untyped-def]
@@ -95,6 +101,10 @@ def build_check_service(
     ledger_repo: LedgerRepository | None = None,
     clock: Clock | None = None,
 ) -> CompositionArtifacts:
+    # Startup validation: load the prompt registry here so a hash
+    # mismatch or missing prompt refuses to boot before any input is
+    # accepted (G-13 + G-25).
+    prompts = load_registry(_PROMPTS_DIR, _PROMPTS_REGISTRY)
     rules = _synthetic_ruleset()
     repo = ledger_repo if ledger_repo is not None else _default_ledger_repo(settings)
     config = ServiceConfig(
@@ -116,4 +126,5 @@ def build_check_service(
         ledger_repo=repo,
         rules=rules,
         settings=settings,
+        prompts=prompts,
     )
