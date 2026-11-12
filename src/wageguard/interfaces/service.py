@@ -1,32 +1,35 @@
-"""CheckService: the single entry point shared by CLI and API (spec §17.1, G-23).
+"""CheckService — single entry point shared by CLI and API.
 
-Threads intake -> scope -> facts -> engine -> (ledger). Decisive
-outcomes go on to retrieval -> explainer -> verifier -> ledger with a
-decision record; abstentions skip the LLM (templated, ADR-0014) and
-append an abstention record. Every fault path appends a fault record
-(best effort) and never emits a decision.
+Threads intake, scope, facts, engine, and ledger. Decisive outcomes
+go on to retrieval, explainer, and verifier before the ledger write
+(wired at composition when an LlmClient is present). Faults append a
+fault record (best effort) and never emit a decision.
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable
+import hashlib
+import json
+from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date
+from decimal import Decimal
 from enum import StrEnum
 from typing import Protocol
 
-from wageguard.compliance.checks.minimum_wage import evaluate_minimum_wage
-from wageguard.compliance.facts import minimum_wage_facts, resolve
+from wageguard.compliance.checks.minimum_wage import (
+    MinimumWageFacts,
+    evaluate_minimum_wage,
+)
+from wageguard.compliance.facts import RawFacts, minimum_wage_facts, resolve
 from wageguard.compliance.rules import Ruleset
 from wageguard.compliance.scope import evaluate_scope
+from wageguard.config import PrivacyMode
 from wageguard.domain.enums import CheckType, PayBasis, WorkerCategory
 from wageguard.domain.errors import (
     ConfigurationError,
-    EvidenceError,
     InputRejected,
     LedgerError,
-    LlmError,
-    VerificationFailed,
     WageGuardError,
 )
 from wageguard.domain.fields import FieldName
@@ -74,6 +77,64 @@ class ServiceConfig:
     federal_code: Jurisdiction
     app_version: str
     git_commit: str
+    privacy_mode: PrivacyMode = PrivacyMode.SYNTHETIC
+
+
+# Fault stage vocabulary — spec-named; `_emit_fault` enforces membership.
+_VALID_FAULT_STAGES: frozenset[str] = frozenset(
+    {"evidence", "llm", "verification", "ledger", "engine"}
+)
+
+
+def _to_minimum_wage_facts(raw_facts: RawFacts) -> MinimumWageFacts | str:
+    """Convert RawFacts into a typed MinimumWageFacts.
+
+    Returns the typed facts on success, or a string describing why
+    conversion failed. Callers route failures through `_emit_fault`
+    at the engine stage — this is not an abstention, it is an
+    unexpected internal shape (the resolver already approved the
+    values; a type mismatch means the Pydantic model and the engine
+    types drifted).
+    """
+    values = raw_facts.values
+    pay_rate = values.get(FieldName.PAY_RATE)
+    work_state = values.get(FieldName.WORK_STATE)
+    work_date = values.get(FieldName.WORK_DATE)
+    pay_basis = values.get(FieldName.PAY_BASIS)
+    worker_category = values.get(FieldName.WORKER_CATEGORY)
+    if not isinstance(pay_rate, Decimal):
+        return f"pay_rate must be Decimal, got {type(pay_rate).__name__}"
+    if not isinstance(work_state, str):
+        return f"work_state must be str, got {type(work_state).__name__}"
+    if not isinstance(work_date, date):
+        return f"work_date must be date, got {type(work_date).__name__}"
+    if not isinstance(pay_basis, PayBasis):
+        return f"pay_basis must be PayBasis, got {type(pay_basis).__name__}"
+    if not isinstance(worker_category, WorkerCategory):
+        return f"worker_category must be WorkerCategory, got {type(worker_category).__name__}"
+    return MinimumWageFacts(
+        work_state=Jurisdiction(work_state),
+        work_date=work_date,
+        pay_rate=Money(pay_rate),
+        pay_basis=pay_basis,
+        worker_category=worker_category,
+    )
+
+
+def _input_fingerprint(
+    raw_json: str, privacy_mode: PrivacyMode
+) -> Mapping[str, object]:
+    """Build the input portion of the ledger body per privacy mode."""
+    input_hash = hashlib.sha256(raw_json.encode("utf-8")).hexdigest()
+    # Use `==` (not `is`) because Pydantic Settings may deliver either
+    # the enum member or its underlying string value.
+    if privacy_mode == PrivacyMode.HASH_ONLY:
+        return {"input_hash": input_hash}
+    try:
+        snapshot = json.loads(raw_json)
+    except json.JSONDecodeError:
+        snapshot = None
+    return {"input_hash": input_hash, "input_snapshot": snapshot}
 
 
 class CheckService:
@@ -91,6 +152,8 @@ class CheckService:
         self._id_generator = id_generator
 
     def run_check(self, raw_json: str) -> CheckResponse:
+        fingerprint = _input_fingerprint(raw_json, self._config.privacy_mode)
+
         # 1. Parse at the trust boundary.
         try:
             raw_facts = parse_check_request(raw_json)
@@ -111,6 +174,7 @@ class CheckService:
             return self._emit_abstention(
                 raw_facts.check,
                 scope.verdict,
+                fingerprint=fingerprint,
                 detail="Out-of-scope input routed to legal review.",
             )
 
@@ -122,62 +186,44 @@ class CheckService:
                 return self._emit_abstention(
                     raw_facts.check,
                     abstention,
+                    fingerprint=fingerprint,
                     detail="Required facts missing / invalid / ambiguous.",
                 )
-            return self._run_minimum_wage(raw_facts)
+            return self._run_minimum_wage(raw_facts, fingerprint=fingerprint)
 
-        return CheckResponse(
-            category=ResultCategory.FAULT,
-            decision_id=None,
-            outcome=None,
+        return self._emit_fault(
+            check_type=raw_facts.check.value,
+            stage="engine",
             detail=f"check type not yet wired in CheckService: {raw_facts.check!r}",
-            fault_stage="service",
+            fingerprint=fingerprint,
         )
 
-    def _run_minimum_wage(self, raw_facts: object) -> CheckResponse:
-        from wageguard.compliance.checks.minimum_wage import MinimumWageFacts
-        from wageguard.compliance.facts import RawFacts
-
-        assert isinstance(raw_facts, RawFacts)
-
-        values = raw_facts.values
-        pay_rate_value = values.get(FieldName.PAY_RATE)
-        work_state_value = values.get(FieldName.WORK_STATE)
-        work_date_value = values.get(FieldName.WORK_DATE)
-        pay_basis_value = values.get(FieldName.PAY_BASIS)
-        worker_category_value = values.get(FieldName.WORKER_CATEGORY)
-
-        from decimal import Decimal
-
-        assert isinstance(pay_rate_value, Decimal)
-        from datetime import date
-
-        assert isinstance(work_state_value, str)
-        assert isinstance(work_date_value, date)
-        assert isinstance(pay_basis_value, PayBasis)
-        assert isinstance(worker_category_value, WorkerCategory)
-
-        facts = MinimumWageFacts(
-            work_state=Jurisdiction(work_state_value),
-            work_date=work_date_value,
-            pay_rate=Money(pay_rate_value),
-            pay_basis=pay_basis_value,
-            worker_category=worker_category_value,
-        )
+    def _run_minimum_wage(
+        self, raw_facts: RawFacts, *, fingerprint: Mapping[str, object]
+    ) -> CheckResponse:
+        converted = _to_minimum_wage_facts(raw_facts)
+        if isinstance(converted, str):
+            return self._emit_fault(
+                check_type=raw_facts.check.value,
+                stage="engine",
+                detail=converted,
+                fingerprint=fingerprint,
+            )
 
         try:
             engine_result = evaluate_minimum_wage(
-                facts, self._config.rules, federal_code=self._config.federal_code
+                converted,
+                self._config.rules,
+                federal_code=self._config.federal_code,
             )
         except ConfigurationError as exc:
-            return self._emit_fault("engine", str(exc))
-        except WageGuardError as exc:  # pragma: no cover - defensive
-            return self._emit_fault("engine", str(exc))
+            return self._emit_fault(
+                check_type=raw_facts.check.value,
+                stage="engine",
+                detail=str(exc),
+                fingerprint=fingerprint,
+            )
 
-        # Retrieval, explainer, and verifier run on decisive outcomes
-        # in the full composition root. The service threads the call
-        # points; the LLM step is wired at composition time.
-        # Append the decision record now with engine-only payload.
         verdict = engine_result.verdict
         try:
             record = ledger_append(
@@ -193,6 +239,7 @@ class CheckService:
                     ruleset_hash=self._config.rules.ruleset_hash,
                 ),
                 body={
+                    **fingerprint,
                     "verdict": "PASS" if isinstance(verdict, Passed) else "FLAG",
                     "controlling_rule_id": str(engine_result.controlling_rule.rule_id),
                     "controlling_rate": engine_result.controlling_rate.to_canonical_string(),
@@ -206,7 +253,12 @@ class CheckService:
                 },
             )
         except LedgerError as exc:
-            return self._emit_fault("ledger", str(exc))
+            return self._emit_fault(
+                check_type=raw_facts.check.value,
+                stage="ledger",
+                detail=str(exc),
+                fingerprint=fingerprint,
+            )
 
         outcome: Outcome
         if isinstance(verdict, Passed):
@@ -233,6 +285,7 @@ class CheckService:
         check_type: CheckType,
         outcome: CannotDetermine | NeedsLegalReview,
         *,
+        fingerprint: Mapping[str, object],
         detail: str,
     ) -> CheckResponse:
         try:
@@ -249,6 +302,7 @@ class CheckService:
                     ruleset_hash=self._config.rules.ruleset_hash,
                 ),
                 body={
+                    **fingerprint,
                     "kind": outcome.__class__.__name__,
                     "reasons": tuple(r.value for r in outcome.reasons),
                     "fields": (
@@ -259,7 +313,12 @@ class CheckService:
                 },
             )
         except LedgerError as exc:
-            return self._emit_fault("ledger", str(exc))
+            return self._emit_fault(
+                check_type=check_type.value,
+                stage="ledger",
+                detail=str(exc),
+                fingerprint=fingerprint,
+            )
 
         return CheckResponse(
             category=ResultCategory.ABSTENTION,
@@ -268,9 +327,20 @@ class CheckService:
             detail=detail,
         )
 
-    def _emit_fault(self, stage: str, detail: str) -> CheckResponse:
-        # Best-effort fault record. If the ledger itself is down, we
-        # return a FAULT response without a decision_id (spec §13.5).
+    def _emit_fault(
+        self,
+        *,
+        check_type: str,
+        stage: str,
+        detail: str,
+        fingerprint: Mapping[str, object] | None = None,
+    ) -> CheckResponse:
+        if stage not in _VALID_FAULT_STAGES:
+            # Programmer error; fail loudly rather than mislabel a record.
+            raise WageGuardError(f"invalid fault stage: {stage!r}")
+        body: dict[str, object] = {"stage": stage, "detail": detail}
+        if fingerprint is not None:
+            body = {**fingerprint, **body}
         try:
             record = ledger_append(
                 self._ledger,
@@ -280,11 +350,11 @@ class CheckService:
                     app_version=self._config.app_version,
                     git_commit=self._config.git_commit,
                     record_kind=RecordKind.FAULT,
-                    check_type_value="minimum_wage",
+                    check_type_value=check_type,
                     ruleset_version=RulesetVersion(str(self._config.rules.version)),
                     ruleset_hash=self._config.rules.ruleset_hash,
                 ),
-                body={"stage": stage, "detail": detail},
+                body=body,
             )
             return CheckResponse(
                 category=ResultCategory.FAULT,
@@ -293,7 +363,10 @@ class CheckService:
                 detail=detail,
                 fault_stage=stage,
             )
-        except (LedgerError, WageGuardError, Exception):
+        except LedgerError:
+            # The ledger itself is down. Return a fault response with
+            # no decision_id — the caller sees stage="ledger" and the
+            # process exit / HTTP 503 remains correct.
             return CheckResponse(
                 category=ResultCategory.FAULT,
                 decision_id=None,
@@ -301,7 +374,3 @@ class CheckService:
                 detail=detail,
                 fault_stage=stage,
             )
-
-
-# Silence unused-import warnings for types referenced only in docs.
-_ = (EvidenceError, LlmError, VerificationFailed, Callable, datetime)

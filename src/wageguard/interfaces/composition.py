@@ -91,6 +91,7 @@ def build_check_service(
         federal_code=jurisdiction("US"),
         app_version="0.0.0",
         git_commit="unknown",
+        privacy_mode=settings.privacy_mode,
     )
     service = CheckService(
         config=config,
