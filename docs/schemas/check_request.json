@@ -1,0 +1,219 @@
+{
+  "$defs": {
+    "CheckType": {
+      "enum": [
+        "minimum_wage",
+        "exemption_salary"
+      ],
+      "title": "CheckType",
+      "type": "string"
+    },
+    "PayBasis": {
+      "enum": [
+        "hourly",
+        "salary"
+      ],
+      "title": "PayBasis",
+      "type": "string"
+    },
+    "PayPeriod": {
+      "enum": [
+        "weekly",
+        "biweekly",
+        "semi_monthly",
+        "monthly"
+      ],
+      "title": "PayPeriod",
+      "type": "string"
+    },
+    "WorkerCategory": {
+      "enum": [
+        "general",
+        "tipped",
+        "youth",
+        "student",
+        "learner",
+        "apprentice",
+        "disabled"
+      ],
+      "title": "WorkerCategory",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "check": {
+      "$ref": "#/$defs/CheckType"
+    },
+    "current_exempt_status": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Current Exempt Status"
+    },
+    "employer_size": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Employer Size"
+    },
+    "hours_worked": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Hours Worked"
+    },
+    "locality": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Locality"
+    },
+    "pay_basis": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PayBasis"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "pay_period": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PayPeriod"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "pay_rate": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Pay Rate"
+    },
+    "period_end": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Period End"
+    },
+    "period_start": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Period Start"
+    },
+    "salary_amount": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Salary Amount"
+    },
+    "work_date": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Work Date"
+    },
+    "work_state": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Work State"
+    },
+    "worker_category": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WorkerCategory"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "check"
+  ],
+  "title": "CheckRequestModel",
+  "type": "object"
+}

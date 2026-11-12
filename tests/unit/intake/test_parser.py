@@ -53,6 +53,10 @@ class TestRejections:
         with pytest.raises(InputRejected):
             parse_check_request('{"check": "minimum_wage", "work_date": "07/01/2024"}')
 
+    def test_unparseable_decimal_string_raises_rejection(self) -> None:
+        with pytest.raises(InputRejected, match="pay_rate"):
+            parse_check_request('{"check": "minimum_wage", "pay_rate": "not_a_number"}')
+
 
 class TestNullAbsentEmptyPolicy:
     def test_absent_field_becomes_none(self) -> None:

@@ -17,6 +17,7 @@ from wageguard.intake.model import CheckRequestModel
 
 
 class TestExtraForbid:
+    @pytest.mark.guarantee("G-04")
     def test_unknown_fields_rejected(self) -> None:
         # Typos become errors, not silently-missing facts (G-04).
         with pytest.raises(ValidationError):

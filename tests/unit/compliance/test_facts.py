@@ -10,6 +10,8 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
+import pytest
+
 from wageguard.compliance.facts import (
     FactResolution,
     RawFacts,
@@ -65,6 +67,7 @@ class TestMissingReporting:
 
 
 class TestMultipleOffendersReportedAtOnce:
+    @pytest.mark.guarantee("G-05")
     def test_resolver_reports_all_missing_fields(self) -> None:
         # G-05: when multiple fields are missing, ALL of them are named
         # in the same abstention payload (resolver does not stop at the
@@ -114,3 +117,24 @@ class TestInput:
         rf = RawFacts(check=CheckType.MINIMUM_WAGE, values=_complete_values())
         res = resolve(minimum_wage_facts(), rf)
         assert res.statuses[FieldName.PAY_RATE] is FactStatus.PRESENT
+
+
+class TestAmbiguousStatusMapsToReason:
+    def test_ambiguous_fact_surfaces_reason_code(self) -> None:
+        # No built-in Phase 2 validator returns AMBIGUOUS, but the
+        # FactResolution contract must map the status to a reason when
+        # a future check introduces one (e.g. city-name resolving to
+        # multiple states, §8.3).
+        from wageguard.compliance.facts import FactResolution, RequiredFact
+        from wageguard.domain.outcomes import CannotDetermine
+
+        def always_ambiguous(_v: object) -> FactStatus:
+            return FactStatus.AMBIGUOUS
+
+        required = (RequiredFact(FieldName.WORK_STATE, always_ambiguous, "test"),)
+        rf = RawFacts(check=CheckType.MINIMUM_WAGE, values={FieldName.WORK_STATE: "X"})
+        res = resolve(required, rf)
+        assert isinstance(res, FactResolution)
+        abst = res.as_abstention()
+        assert isinstance(abst, CannotDetermine)
+        assert ReasonCode.AMBIGUOUS_FIELD_VALUE in abst.reasons

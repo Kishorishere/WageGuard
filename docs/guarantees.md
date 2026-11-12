@@ -21,6 +21,8 @@ The README copies rows out of this file. `make docs-check` runs the script.
 | G-01 | Money uses `Decimal`; constructing `Money` from `float` raises. | `tests/unit/domain/test_money.py::TestConstruction::test_float_rejection_is_a_guarantee` |
 | G-02 | `EffectiveRange` is half-open `[start, end)`; adjacent ranges never overlap. | `tests/unit/domain/test_ranges.py::TestOverlap::test_adjacent_ranges_do_not_overlap` |
 | G-03 | Decision / Abstention / Rejection / Fault are disjoint types; no fault is representable as an abstention. | `tests/unit/domain/test_outcomes.py::TestDisjointFromFault::test_fault_types_are_not_outcome_types` |
+| G-04 | Intake rejects unknown fields (`extra="forbid"`) and distinguishes MISSING / INVALID / AMBIGUOUS. | `tests/unit/intake/test_model.py::TestExtraForbid::test_unknown_fields_rejected` |
+| G-05 | `CANNOT_DETERMINE` always names every missing / invalid / ambiguous field at once. | `tests/unit/compliance/test_facts.py::TestMultipleOffendersReportedAtOnce::test_resolver_reports_all_missing_fields` |
 
 ---
 
@@ -31,8 +33,6 @@ phase that implements and tests it.
 
 | ID | Guarantee | Target phase |
 |----|-----------|--------------|
-| G-04 | Intake rejects unknown fields (`extra="forbid"`) and distinguishes MISSING / INVALID / AMBIGUOUS. | Phase 2 |
-| G-05 | `CANNOT_DETERMINE` always names every missing / invalid / ambiguous field at once. | Phase 2 |
 | G-06 | No legal value (wage rate, salary threshold) is hard-coded in `src/`. | Phase 3 |
 | G-07 | The highest applicable rate controls; this is sourced from an official passage. | Phase 3 |
 | G-08 | Corpus ingestion is deterministic: identical snapshot bytes produce identical passage IDs. | Phase 4 |

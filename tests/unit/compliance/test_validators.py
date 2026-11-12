@@ -7,15 +7,15 @@ from decimal import Decimal
 
 import pytest
 
-from wageguard.domain.enums import PayBasis, WorkerCategory
-from wageguard.domain.fact_status import FactStatus
-from wageguard.intake.validators import (
+from wageguard.compliance.validators import (
     validate_money,
     validate_pay_basis,
     validate_us_state,
     validate_work_date,
     validate_worker_category,
 )
+from wageguard.domain.enums import PayBasis, WorkerCategory
+from wageguard.domain.fact_status import FactStatus
 
 
 class TestUsStateValidator:

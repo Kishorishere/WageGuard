@@ -11,7 +11,9 @@ authors = [{ name = "WageGuard" }]
 # Phase-specific dependencies (pydantic, sqlalchemy, fastapi, pgvector,
 # httpx, structlog, etc.) are added in the phase that first uses them,
 # together with the tests that justify them.
-dependencies = []
+dependencies = [
+    "pydantic==2.9.2",
+]
 
 [project.optional-dependencies]
 dev = [
