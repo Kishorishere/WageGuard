@@ -16,6 +16,10 @@ RuleId = NewType("RuleId", str)
 RulesetVersion = NewType("RulesetVersion", str)
 SourceVersionId = NewType("SourceVersionId", str)
 PromptVersion = NewType("PromptVersion", str)
+SourceKey = NewType("SourceKey", str)
+ContentHash = NewType("ContentHash", str)  # SHA-256 hex, 64 chars
+ChunkerVersion = NewType("ChunkerVersion", str)
+EmbeddingModelId = NewType("EmbeddingModelId", str)
 
 
 _SOURCE_KEY_RE = re.compile(r"[a-z][a-z0-9_]*")

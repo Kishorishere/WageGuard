@@ -1,0 +1,11 @@
+sources:
+  - source_key: "synthetic_src"
+    publisher: "WageGuard Synthetic"
+    title: "Synthetic Fact Sheet"
+    url: "https://example.invalid/synthetic/fact-sheet"
+    jurisdiction: "US"
+    topics:
+      - "minimum_wage"
+    source_type: "agency_guidance"
+    fetch_method: "html"
+    notes: "Fixture for Phase 4 chunker and ingest tests; not a real source."
