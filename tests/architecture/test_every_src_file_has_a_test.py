@@ -29,6 +29,7 @@ _ALLOWLIST: frozenset[str] = frozenset(
         "src/wageguard/evaluation/__init__.py",
         "src/wageguard/interfaces/__init__.py",
         "src/wageguard/observability/__init__.py",
+        "src/wageguard/resilience/__init__.py",
     }
 )
 

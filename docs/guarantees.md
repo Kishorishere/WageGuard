@@ -38,6 +38,7 @@ The README copies rows out of this file. `make docs-check` runs the script.
 | G-19 | Golden metrics are reported with numerators, denominators, and Wilson 95% intervals; `non_abstained == 0` is reported as undefined, not zero. | `tests/unit/evaluation/test_metrics.py::test_non_abstained_zero_yields_undefined_confidently_wrong_rate` |
 | G-20 | The held-out split is not read by any tuning script; every held-out run is logged. | `tests/unit/evaluation/test_cases.py::test_committed_splits_have_no_overlap` |
 | G-21 | Exemption `PASS` is unreachable without the documented conditions (property-tested). | `tests/unit/compliance/checks/test_exemption_salary.py::TestRefusalToCertify::test_no_input_produces_pass_when_opted_out` |
+| G-22 | Every row of the fault matrix produces a Fault record and no decision record. | `tests/unit/resilience/test_fault_matrix.py::test_g22_fault_injection_never_emits_a_decision_record` |
 
 ---
 
@@ -49,7 +50,6 @@ phase that implements and tests it.
 | ID | Guarantee | Target phase |
 |----|-----------|--------------|
 | G-07 | The highest applicable rate controls; this is sourced from an official passage. | Phase 3 (engine) + Phase 4 (sourcing) |
-| G-22 | Every row of the fault matrix produces a Fault record and no decision record. | Phase 10 |
 | G-23 | The CLI and API share one service and return identical results for the same input. | Phase 11 |
 | G-24 | API returns a 2xx response only when a ledger record exists; a 503 names the fault stage. | Phase 11 |
 | G-25 | `/readyz` fails when the ruleset or prompt hash verification fails. | Phase 11 |
