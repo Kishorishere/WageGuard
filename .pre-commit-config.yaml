@@ -1,0 +1,62 @@
+# Pre-commit mirrors CI so failures surface locally (S-1).
+# Install with `make hooks` (which runs `uv run pre-commit install`).
+
+default_language_version:
+  python: python3.12
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: ["--fix", "--exit-non-zero-on-fix"]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.2
+    hooks:
+      - id: mypy
+        additional_dependencies: []
+        pass_filenames: false
+        args: ["--config-file=pyproject.toml"]
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.19.2
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: uv-lock-is-current
+        name: uv.lock is current
+        entry: uv lock --check
+        language: system
+        pass_filenames: false
+        files: ^(pyproject\.toml|uv\.lock)$
+
+      - id: guarantee-registry
+        name: guarantee registry <-> tests
+        entry: python scripts/check_guarantees.py
+        language: system
+        pass_filenames: false
+        files: ^(docs/guarantees\.md|tests/.*\.py|scripts/check_guarantees\.py)$
+
+      - id: architecture-tests
+        name: architecture tests (float, datetime, imports)
+        entry: python -m pytest -m architecture -q
+        language: system
+        pass_filenames: false
+        files: ^(src/|tests/architecture/)

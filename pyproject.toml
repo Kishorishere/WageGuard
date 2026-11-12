@@ -1,0 +1,148 @@
+[project]
+name = "wageguard"
+version = "0.0.0"
+description = "Auditable US wage-and-hour compliance screening prototype."
+readme = "README.md"
+requires-python = "==3.12.*"
+license = { text = "MIT" }
+authors = [{ name = "WageGuard" }]
+
+# Runtime dependencies are intentionally minimal in Phase 0.
+# Phase-specific dependencies (pydantic, sqlalchemy, fastapi, pgvector,
+# httpx, structlog, etc.) are added in the phase that first uses them,
+# together with the tests that justify them.
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "ruff==0.6.9",
+    "mypy==1.11.2",
+    "pytest==8.3.3",
+    "pytest-cov==5.0.0",
+    "pytest-xdist==3.6.1",
+    "hypothesis==6.112.1",
+    "pip-audit==2.7.3",
+    "pre-commit==3.8.0",
+]
+
+[project.scripts]
+wageguard = "wageguard.interfaces.cli:main"
+
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/wageguard"]
+
+# --------------------------------------------------------------------------
+# ruff
+# --------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+extend-exclude = ["migrations"]
+
+[tool.ruff.lint]
+# S-1: broad rule selection. Every ignore below is justified inline.
+select = [
+    "E", "F", "I", "B", "UP", "SIM", "C4", "PL", "RUF", "S", "PT", "ANN",
+    "TCH", "N", "A", "DTZ", "T20", "ERA",
+]
+ignore = [
+    # ANN101/ANN102 (self/cls annotations) are noise in modern typed code.
+    "ANN101", "ANN102",
+    # PLR0913 (too many args): frozen dataclasses legitimately have many fields;
+    # architecture tests enforce module/function size separately (S-5).
+    "PLR0913",
+    # TCH001-003: `if TYPE_CHECKING` adds ceremony without a measurable win
+    # for a project of this size; revisit if import cost becomes a concern.
+    "TCH001", "TCH002", "TCH003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests may use `assert`, hard-coded "secrets" in fixtures, and long lines.
+"tests/**" = ["S101", "S105", "S106", "ANN201", "PLR2004"]
+# The scripts/ tree is operational tooling, not shipped code.
+"scripts/**" = ["T201", "S603", "S607"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["wageguard"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# --------------------------------------------------------------------------
+# mypy
+# --------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["wageguard"]
+mypy_path = "src"
+# S-2: no Any leaking from domain code.
+disallow_any_generics = true
+warn_return_any = true
+warn_unreachable = true
+no_implicit_reexport = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+# Stricter rules on the domain core (S-2, S-4).
+module = ["wageguard.domain.*", "wageguard.compliance.*", "wageguard.ledger.canonical"]
+disallow_any_expr = true
+disallow_any_decorated = true
+disallow_any_explicit = true
+
+# --------------------------------------------------------------------------
+# pytest
+# --------------------------------------------------------------------------
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+# S-6: markers are a contract. `guarantee` ties every README claim to a test.
+markers = [
+    "guarantee(id): links a test to a guarantee ID in docs/guarantees.md",
+    "integration: requires a real database (not run in unit tier)",
+    "property: Hypothesis-driven property test",
+    "golden: end-to-end golden-set test (recorded cassettes)",
+    "failure_injection: resilience test using fault-injecting ports",
+    "architecture: structural rule enforced via AST or import graph",
+]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "-p", "no:cacheprovider",
+]
+filterwarnings = ["error"]
+xfail_strict = true
+
+# --------------------------------------------------------------------------
+# coverage
+# --------------------------------------------------------------------------
+[tool.coverage.run]
+branch = true
+source = ["src/wageguard"]
+parallel = true
+
+[tool.coverage.report]
+# Overall project floor (S-1). Per-package floors (95% on compliance/,
+# ledger/, citations/) are enforced in CI via a dedicated job that runs
+# coverage on those packages in isolation.
+fail_under = 85
+show_missing = true
+skip_empty = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "@overload",
+]
+
+# --------------------------------------------------------------------------
+# uv — creates and manages .venv/ in the repo root; uv.lock is committed
+# for hermetic installs (S-7). Dev deps are under [project.optional-dependencies]
+# so they are also installable via plain `pip install -e .[dev]`.
+# --------------------------------------------------------------------------

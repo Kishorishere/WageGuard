@@ -1,0 +1,20 @@
+# gitleaks configuration — extends the default rules with allowlists for
+# WageGuard's synthetic fixtures. Real secrets never belong in the repo.
+
+title = "WageGuard gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known-synthetic paths and strings"
+paths = [
+    '''\.env\.example$''',
+    '''docs/.*''',
+    '''compliance-project\.md$''',
+]
+regexes = [
+    # The example compose database password is "wageguard" — documented,
+    # synthetic, and never used outside the local dev container.
+    '''wageguard:wageguard''',
+]

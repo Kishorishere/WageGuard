@@ -1,0 +1,45 @@
+# Byte-compiled / packaged
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# Virtualenvs and tool caches
+.venv/
+venv/
+env/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.hypothesis/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Secrets and local overrides
+.env
+.env.local
+*.local.env
+secrets.*
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Project outputs
+reports/
+data/snapshots/*
+!data/snapshots/.gitkeep
+cassettes/local/
+
+# Docker build context noise
+*.tar
+*.tar.gz

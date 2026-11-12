@@ -1,0 +1,35 @@
+# Local development: Postgres + pgvector only.
+#
+# The application image is BUILT in GitHub Actions
+# (.github/workflows/docker.yaml), not here. Running the app locally
+# during development is done via `uv run wageguard ...` against this DB.
+#
+# VERIFY: replace the pgvector image tag with a @sha256 digest pin before
+# any shared/CI reuse (S-7). The tag form is retained in Phase 0 to avoid
+# fabricating a digest value.
+
+name: wageguard
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: wageguard-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: wageguard
+      POSTGRES_PASSWORD: wageguard
+      POSTGRES_DB: wageguard
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - wageguard-pgdata:/var/lib/postgresql/data
+      - ./scripts/db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wageguard -d wageguard"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  wageguard-pgdata:
+    name: wageguard-pgdata
