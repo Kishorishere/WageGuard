@@ -37,6 +37,15 @@ class TestConstruction:
         with pytest.raises((ValueError, TypeError)):
             Money("abc")
 
+    def test_rejects_non_decimal_non_string_object(self) -> None:
+        with pytest.raises(TypeError, match="Money.amount must be"):
+            Money([1, 2])  # type: ignore[arg-type]
+
+    def test_rejects_bool(self) -> None:
+        # bool is an int subclass but conceptually not a money amount.
+        with pytest.raises(TypeError):
+            Money(True)  # type: ignore[arg-type]
+
     @pytest.mark.guarantee("G-01")
     def test_float_rejection_is_a_guarantee(self) -> None:
         # G-01: constructing Money from float raises.
@@ -58,6 +67,7 @@ class TestEqualityAndOrdering:
         at = Money("15.25")
         above = Money("15.26")
         assert below < at < above
+        assert above > at > below
         assert not (below >= at)
         assert at <= above
 
@@ -82,18 +92,12 @@ class TestArithmetic:
         assert delta == Money("2.25")
 
     def test_mixed_currency_addition_raises(self) -> None:
-        # We only define USD in Phase 1, so to test the guardrail we
-        # construct a second currency through an injected member.
+        # Only USD is defined in Phase 1, so to exercise the guardrail
+        # we build a second Money whose currency is a different value
+        # (bypassing the frozen-dataclass __init__ via object.__setattr__).
         usd = Money("1.00", Currency.USD)
-        other = Money.__new__(Money)
-        object_setattr = type(Money).__setattr__
-        # Build a Money with an unrecognised currency via direct attr set,
-        # bypassing the normal validation; this is a defensive test for
-        # the arithmetic guard, not a supported construction path.
-        object_setattr(other, "amount", Decimal("1.00"))
-        # A member that compares unequal to Currency.USD suffices.
-        fake_eur = "EUR"
-        object_setattr(other, "currency", fake_eur)  # type: ignore[arg-type]
+        other = Money("1.00", Currency.USD)
+        object.__setattr__(other, "currency", "EUR")
         with pytest.raises(CurrencyMismatchError):
             _ = usd + other
 

@@ -63,6 +63,22 @@ class TestPassageIdParse:
             PassageId.parse("src@v0#p001")
 
 
+class TestPassageIdDirectConstructionValidation:
+    """parse() rejects via regex; direct __init__ has its own guards."""
+
+    def test_direct_construction_rejects_invalid_source_key(self) -> None:
+        with pytest.raises(ValueError, match="passage id"):
+            PassageId(source_key="UPPER", version_no=1, ordinal=0)
+
+    def test_direct_construction_rejects_zero_version(self) -> None:
+        with pytest.raises(ValueError, match="passage id"):
+            PassageId(source_key="src", version_no=0, ordinal=0)
+
+    def test_direct_construction_rejects_negative_ordinal(self) -> None:
+        with pytest.raises(ValueError, match="passage id"):
+            PassageId(source_key="src", version_no=1, ordinal=-1)
+
+
 class TestPassageIdEquality:
     def test_equal_ids_compare_equal(self) -> None:
         a = PassageId("src", 1, 1)

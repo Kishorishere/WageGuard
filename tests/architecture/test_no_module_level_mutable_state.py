@@ -44,6 +44,10 @@ _ALLOWED_MODULE_LEVEL_CALLS = frozenset(
         "getLogger",  # logging.getLogger("wageguard.<...>")
         "Decimal",  # Decimal("1.50") is immutable
         "Path",  # Path("/...") is immutable
+        "MappingProxyType",  # read-only view over a dict literal, immutable
+        "compile",  # re.compile(...) returns an immutable Pattern object
+        "sha256",  # hashlib.sha256() is a ctor; usage is pure
+        "field",  # dataclasses.field(...) is a descriptor spec
     }
 )
 

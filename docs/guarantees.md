@@ -18,9 +18,9 @@ The README copies rows out of this file. `make docs-check` runs the script.
 
 | ID | Guarantee | Owning test marker |
 |----|-----------|--------------------|
-
-*(Phase 0 ships the registry wiring itself; the first Active guarantees
-are added by Phase 1 together with their tests.)*
+| G-01 | Money uses `Decimal`; constructing `Money` from `float` raises. | `tests/unit/domain/test_money.py::TestConstruction::test_float_rejection_is_a_guarantee` |
+| G-02 | `EffectiveRange` is half-open `[start, end)`; adjacent ranges never overlap. | `tests/unit/domain/test_ranges.py::TestOverlap::test_adjacent_ranges_do_not_overlap` |
+| G-03 | Decision / Abstention / Rejection / Fault are disjoint types; no fault is representable as an abstention. | `tests/unit/domain/test_outcomes.py::TestDisjointFromFault::test_fault_types_are_not_outcome_types` |
 
 ---
 
@@ -31,9 +31,6 @@ phase that implements and tests it.
 
 | ID | Guarantee | Target phase |
 |----|-----------|--------------|
-| G-01 | Money uses `Decimal`; constructing `Money` from `float` raises. | Phase 1 |
-| G-02 | `EffectiveRange` is half-open `[start, end)`; adjacent ranges never overlap. | Phase 1 |
-| G-03 | Decision / Abstention / Rejection / Fault are disjoint types; no fault is representable as an abstention. | Phase 1 |
 | G-04 | Intake rejects unknown fields (`extra="forbid"`) and distinguishes MISSING / INVALID / AMBIGUOUS. | Phase 2 |
 | G-05 | `CANNOT_DETERMINE` always names every missing / invalid / ambiguous field at once. | Phase 2 |
 | G-06 | No legal value (wage rate, salary threshold) is hard-coded in `src/`. | Phase 3 |

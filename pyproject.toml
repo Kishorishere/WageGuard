@@ -66,6 +66,12 @@ ignore = [
 "tests/**" = ["S101", "S105", "S106", "ANN201", "PLR2004"]
 # The scripts/ tree is operational tooling, not shipped code.
 "scripts/**" = ["T201", "S603", "S607"]
+# N818 wants an "Error" suffix on every exception class; the names used
+# below (InputRejected, LlmTimeout, VerificationFailed, ChainBroken, ...)
+# come from the spec's error hierarchy (§7.2) and are the documented
+# public API. Renaming them to InputRejectedError etc. would diverge from
+# the specification without a review benefit.
+"src/wageguard/domain/errors.py" = ["N818"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["wageguard"]
