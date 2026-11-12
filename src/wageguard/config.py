@@ -57,3 +57,5 @@ class Settings(BaseSettings):
 
     log_level: str = "INFO"
     log_format: str = "json"
+
+    ledger_path: str = ""  # empty -> in-memory; set path -> file-backed

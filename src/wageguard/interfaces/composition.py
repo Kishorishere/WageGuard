@@ -11,6 +11,7 @@ import itertools
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
+from pathlib import Path
 
 from wageguard.compliance.rules import Rule, Ruleset
 from wageguard.config import Settings
@@ -19,6 +20,7 @@ from wageguard.domain.identifiers import DecisionId, PassageId, RuleId, RulesetV
 from wageguard.domain.jurisdiction import jurisdiction
 from wageguard.domain.ranges import EffectiveRange
 from wageguard.interfaces.service import CheckService, ServiceConfig
+from wageguard.ledger.file_repository import FileBackedLedgerRepository
 from wageguard.ledger.repository import InMemoryLedgerRepository, LedgerRepository
 from wageguard.resilience.clock import Clock, SystemClock
 
@@ -69,6 +71,12 @@ def _synthetic_ruleset() -> Ruleset:
     return Ruleset.from_rules(RulesetVersion("synthetic.0.0"), rules)
 
 
+def _default_ledger_repo(settings: Settings) -> LedgerRepository:
+    if settings.ledger_path:
+        return FileBackedLedgerRepository(Path(settings.ledger_path))
+    return InMemoryLedgerRepository()
+
+
 def build_check_service(
     settings: Settings,
     *,
@@ -76,7 +84,7 @@ def build_check_service(
     clock: Clock | None = None,
 ) -> CompositionArtifacts:
     rules = _synthetic_ruleset()
-    repo = ledger_repo if ledger_repo is not None else InMemoryLedgerRepository()
+    repo = ledger_repo if ledger_repo is not None else _default_ledger_repo(settings)
     config = ServiceConfig(
         rules=rules,
         supported_jurisdictions=frozenset({"US", "WA", "AL", "TESTLAND-A", "TESTLAND-B"}),

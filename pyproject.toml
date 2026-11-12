@@ -103,6 +103,9 @@ ignore = [
 # the alternative is a ladder of typed accessors on RawFacts.values,
 # which Phase 2 deliberately kept open-ended.
 "src/wageguard/interfaces/service.py" = ["S101"]
+# File-backed ledger reads back untyped JSON; isinstance narrowings
+# are the local trust boundary.
+"src/wageguard/ledger/file_repository.py" = ["S101"]
 "src/wageguard/interfaces/composition.py" = ["ANN202"]
 # HTTP status range 400..600 is standard and self-documenting.
 "src/wageguard/llm/gemini_client.py" = ["PLR2004"]
