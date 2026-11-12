@@ -16,11 +16,35 @@ _VALID_STAGES = {"evidence", "llm", "verification", "ledger", "engine"}
 
 
 def test_fault_stage_is_always_a_spec_named_value() -> None:
-    """A request for an unwired check type returns a FAULT whose
-    fault_stage is one of the spec-named set (never "service" or
-    anything else)."""
-    artifacts = build_check_service(Settings(), clock=FakeClock())
-    r = artifacts.service.run_check(json.dumps({"check": "exemption_salary"}))
+    """Injected ledger failure must produce a FAULT whose fault_stage
+    is one of the spec-named set (never 'service' or similar)."""
+    from wageguard.domain.errors import AppendFailed
+    from wageguard.ledger.repository import InMemoryLedgerRepository
+    from wageguard.resilience.fault_injection import (
+        FailureSchedule,
+        FaultInjectingLedgerRepository,
+        Schedule,
+    )
+
+    broken = FaultInjectingLedgerRepository(
+        inner=InMemoryLedgerRepository(),
+        exc_factory=lambda: AppendFailed("db down"),
+        schedule=Schedule(FailureSchedule.ALWAYS),
+        stage="append_record",
+    )
+    artifacts = build_check_service(Settings(), ledger_repo=broken, clock=FakeClock())
+    r = artifacts.service.run_check(
+        json.dumps(
+            {
+                "check": "minimum_wage",
+                "work_state": "US",
+                "work_date": "2024-07-01",
+                "pay_rate": "7.25",
+                "pay_basis": "hourly",
+                "worker_category": "general",
+            }
+        )
+    )
     assert r.category is ResultCategory.FAULT
     assert r.fault_stage in _VALID_STAGES
 

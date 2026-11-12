@@ -50,19 +50,45 @@ def test_post_check_rejection_returns_422() -> None:
 
 @pytest.mark.guarantee("G-24")
 def test_post_check_fault_returns_503_and_names_stage() -> None:
-    # Ask for a check type the service doesn't wire yet -> FAULT path.
-    app, key, _ = _app_with_keys()
+    # Inject a ledger that fails every append; any check must come back
+    # as a 503 whose body names a spec-known fault_stage.
+    from wageguard.domain.errors import AppendFailed
+    from wageguard.interfaces.api import create_app
+    from wageguard.interfaces.composition import build_check_service
+    from wageguard.ledger.repository import InMemoryLedgerRepository
+    from wageguard.resilience.fault_injection import (
+        FailureSchedule,
+        FaultInjectingLedgerRepository,
+        Schedule,
+    )
+
+    settings = Settings(api_keys="checker:test-secret")
+    broken = FaultInjectingLedgerRepository(
+        inner=InMemoryLedgerRepository(),
+        exc_factory=lambda: AppendFailed("db down"),
+        schedule=Schedule(FailureSchedule.ALWAYS),
+        stage="append_record",
+    )
+    artifacts = build_check_service(settings, ledger_repo=broken, clock=FakeClock())
+    app = create_app(settings, artifacts=artifacts)
     client = TestClient(app)
-    # `exemption_salary` isn't routed in CheckService._run_minimum_wage,
-    # so the service returns a FAULT with stage="service".
     r = client.post(
         "/v1/checks",
-        content=json.dumps({"check": "exemption_salary"}),
-        headers={"x-api-key": key},
+        content=json.dumps(
+            {
+                "check": "minimum_wage",
+                "work_state": "US",
+                "work_date": "2024-07-01",
+                "pay_rate": "7.25",
+                "pay_basis": "hourly",
+                "worker_category": "general",
+            }
+        ),
+        headers={"x-api-key": "test-secret"},
     )
     assert r.status_code == 503
     body = r.json()
-    assert body["fault_stage"] is not None
+    assert body["fault_stage"] in {"evidence", "llm", "verification", "ledger", "engine"}
 
 
 def test_missing_api_key_returns_401() -> None:

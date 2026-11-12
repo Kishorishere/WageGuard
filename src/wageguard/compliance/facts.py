@@ -13,8 +13,10 @@ from dataclasses import dataclass
 from types import MappingProxyType
 
 from wageguard.compliance.validators import (
+    validate_bool,
     validate_money,
     validate_pay_basis,
+    validate_pay_period,
     validate_us_state,
     validate_work_date,
     validate_worker_category,
@@ -80,6 +82,39 @@ def resolve(required: Sequence[RequiredFact], facts: RawFacts) -> FactResolution
         v = facts.values.get(req.name)
         statuses[req.name] = req.validator(v)
     return FactResolution(MappingProxyType(statuses))
+
+
+def exemption_salary_facts() -> tuple[RequiredFact, ...]:
+    """Required-facts graph for the `exemption_salary` check."""
+    return (
+        RequiredFact(FieldName.WORK_STATE, validate_us_state, "Determines applicable rules."),
+        RequiredFact(FieldName.WORK_DATE, validate_work_date, "Thresholds are effective-dated."),
+        RequiredFact(
+            FieldName.SALARY_AMOUNT,
+            validate_money,
+            "Compared against the controlling threshold.",
+        ),
+        RequiredFact(
+            FieldName.PAY_BASIS,
+            validate_pay_basis,
+            "Hourly pay cannot satisfy the salary-basis requirement.",
+        ),
+        RequiredFact(
+            FieldName.PAY_PERIOD,
+            validate_pay_period,
+            "The pay period pins the threshold's unit of comparison.",
+        ),
+        RequiredFact(
+            FieldName.WORKER_CATEGORY,
+            validate_worker_category,
+            "Non-general categories route to legal review.",
+        ),
+        RequiredFact(
+            FieldName.CURRENT_EXEMPT_STATUS,
+            validate_bool,
+            "Employer-recorded assertion; treated as input, not evidence.",
+        ),
+    )
 
 
 def minimum_wage_facts() -> tuple[RequiredFact, ...]:

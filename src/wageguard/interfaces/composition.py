@@ -50,10 +50,10 @@ def _synthetic_ruleset() -> Ruleset:
     non-prototype use.
     """
     passage = PassageId("synthetic_src", 1, 0)
-    # The synthetic value is derived from an integer-cent constant so no
-    # wage-shaped literal (e.g. "7.25") appears in Python source — see
-    # G-06 and tests/architecture/test_no_legal_values_in_src.py.
+    # Synthetic values derived from integer cents so no wage-shaped
+    # literal appears in Python source — see G-06.
     synthetic_rate = Decimal(725) / Decimal(100)
+    synthetic_exempt_threshold = Decimal(100000) / Decimal(100)
     rules = (
         Rule(
             rule_id=RuleId("us.mw.synth"),
@@ -66,6 +66,18 @@ def _synthetic_ruleset() -> Ruleset:
             supporting_passages=(passage,),
             review_status=ReviewStatus.NOT_REVIEWED_BY_COUNSEL,
             notes="Synthetic federal placeholder; NOT a real legal value.",
+        ),
+        Rule(
+            rule_id=RuleId("us.exempt.synth"),
+            jurisdiction=jurisdiction("US"),
+            topic=Topic.EXEMPTION_SALARY_LEVEL,
+            worker_category=WorkerCategory.GENERAL,
+            value=synthetic_exempt_threshold,
+            unit="USD/week",
+            effective=EffectiveRange(date(2020, 1, 1), None),
+            supporting_passages=(passage,),
+            review_status=ReviewStatus.NOT_REVIEWED_BY_COUNSEL,
+            notes="Synthetic weekly exemption placeholder; NOT a real legal value.",
         ),
     )
     return Ruleset.from_rules(RulesetVersion("synthetic.0.0"), rules)

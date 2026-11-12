@@ -49,7 +49,7 @@ def _record_from_dict(data: dict[str, object]) -> LedgerRecord:
     replay_of_raw = header_data.get("replay_of")
     header = RecordHeader(
         decision_id=DecisionId(str(header_data["decision_id"])),
-        sequence_no=int(header_data["sequence_no"]),  # type: ignore[arg-type]
+        sequence_no=int(str(header_data["sequence_no"])),
         created_at=datetime.fromisoformat(str(header_data["created_at"])),
         app_version=str(header_data["app_version"]),
         git_commit=str(header_data["git_commit"]),

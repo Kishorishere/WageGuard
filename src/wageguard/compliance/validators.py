@@ -12,7 +12,7 @@ import re
 from datetime import date
 from decimal import Decimal
 
-from wageguard.domain.enums import PayBasis, WorkerCategory
+from wageguard.domain.enums import PayBasis, PayPeriod, WorkerCategory
 from wageguard.domain.fact_status import FactStatus
 
 _US_STATE_RE = re.compile(r"[A-Z]{2}")
@@ -58,5 +58,21 @@ def validate_worker_category(v: object) -> FactStatus:
     if v is None:
         return FactStatus.MISSING
     if not isinstance(v, WorkerCategory):
+        return FactStatus.INVALID
+    return FactStatus.PRESENT
+
+
+def validate_pay_period(v: object) -> FactStatus:
+    if v is None:
+        return FactStatus.MISSING
+    if not isinstance(v, PayPeriod):
+        return FactStatus.INVALID
+    return FactStatus.PRESENT
+
+
+def validate_bool(v: object) -> FactStatus:
+    if v is None:
+        return FactStatus.MISSING
+    if not isinstance(v, bool):
         return FactStatus.INVALID
     return FactStatus.PRESENT
