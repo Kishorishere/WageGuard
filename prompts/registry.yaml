@@ -1,0 +1,5 @@
+prompts:
+- name: explain_decision
+  version: v1
+  path: explain_decision/v1.txt
+  sha256: 50d49ad2e33fbebcbaf4aa9cb321d59eb798a6c59b540dcbf2cc90858192c6f9
