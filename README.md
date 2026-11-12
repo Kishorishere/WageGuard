@@ -29,7 +29,7 @@ employer, agency, or vendor.** Rules in this repository are
 | Phase 8 — evaluation core (scoring, metrics, Wilson, cases) | ✅ Core complete; 3 synthetic cases; baseline + Evalforge deferred |
 | Phase 9 — exemption screen | ✅ Implemented (refusal to certify; property-tested) |
 | Phase 10 — failure injection | ✅ 16-row matrix implemented |
-| Phase 11 — interfaces, composition root, API-key auth | ✅ Implemented (CLI + FastAPI + GeminiClient) |
+| Phase 11 — interfaces, composition root, API-key auth | **Partially implemented**: CLI + FastAPI + GeminiClient live; CLI persists via a file-backed ledger; the verifier is not yet threaded through the decisive path in `CheckService` |
 | Phase 12 — docs, ADRs, README | ✅ This document; 22 ADRs |
 
 ### Partially implemented
@@ -393,13 +393,18 @@ How to contribute (short form; see
 
 **As of this commit:**
 
-- 545 tests pass (unit, property, metamorphic, architecture,
-  adversarial, resilience).
-- 24 guarantees Active; 2 Planned.
-- 22 ADRs.
-- 70 source files; `mypy --strict` clean.
-- 95%+ branch coverage overall; 100% on the core (`compliance/`,
-  `ledger/canonical`, `ledger/chain`).
+- 573 tests pass (unit, property, metamorphic, architecture,
+  adversarial, resilience, interfaces).
+- 24 guarantees Active; 2 Planned (G-07 sourcing + G-26 reproduce).
+- 22 ADRs (0001–0022).
+- 71 source files; `mypy --strict` clean.
+- ~92% branch coverage overall. Pure-core modules (`domain/`,
+  `ledger/canonical`, `ledger/chain`, `compliance/scope`,
+  `compliance/validators`, `compliance/facts`, `evaluation/intervals`,
+  `evaluation/metrics`) are at 100%. The engine modules
+  (`compliance/checks/*`) sit above 90% after the fault-path tests.
+  The 95% floor on the full `compliance/` package is a target, not a
+  current claim — see the deferred mutation-testing track.
 
 The committed golden-report numbers (confidently-wrong rate, etc.)
 land when the end-to-end `make golden` runs over the full 40-case
