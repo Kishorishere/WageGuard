@@ -72,6 +72,7 @@ ledger-verify:
 docs-check:
 	$(UV) run python scripts/check_guarantees.py
 	$(UV) run python scripts/check_schemas.py
+	$(UV) run python scripts/generate_source_register.py
 
 audit:
 	$(UV) run pip-audit --strict

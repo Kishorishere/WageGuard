@@ -9,7 +9,7 @@ import pytest
 from wageguard.domain.identifiers import ChunkerVersion, SourceKey
 from wageguard.evidence.chunking import chunk_html
 
-FIXTURE = Path(__file__).resolve().parents[3] / "_fixtures" / "corpus" / "synthetic.html"
+FIXTURE = Path(__file__).resolve().parents[2] / "_fixtures" / "corpus" / "synthetic.html"
 
 
 def _bytes() -> bytes:

@@ -24,6 +24,7 @@ The README copies rows out of this file. `make docs-check` runs the script.
 | G-04 | Intake rejects unknown fields (`extra="forbid"`) and distinguishes MISSING / INVALID / AMBIGUOUS. | `tests/unit/intake/test_model.py::TestExtraForbid::test_unknown_fields_rejected` |
 | G-05 | `CANNOT_DETERMINE` always names every missing / invalid / ambiguous field at once. | `tests/unit/compliance/test_facts.py::TestMultipleOffendersReportedAtOnce::test_resolver_reports_all_missing_fields` |
 | G-06 | No legal value (wage rate, salary threshold) is hard-coded in `src/`. | `tests/architecture/test_no_legal_values_in_src.py::test_no_wage_shaped_decimal_literal_under_src` |
+| G-08 | Corpus ingestion is deterministic: identical snapshot bytes produce identical passage IDs. | `tests/unit/evidence/test_chunking.py::TestDeterminism::test_same_bytes_produce_identical_passages` |
 
 ---
 
@@ -35,7 +36,6 @@ phase that implements and tests it.
 | ID | Guarantee | Target phase |
 |----|-----------|--------------|
 | G-07 | The highest applicable rate controls; this is sourced from an official passage. | Phase 3 (engine) + Phase 4 (sourcing) |
-| G-08 | Corpus ingestion is deterministic: identical snapshot bytes produce identical passage IDs. | Phase 4 |
 | G-09 | Retrieval applies jurisdiction/topic/date filters **before** ranking; a wrong-jurisdiction passage cannot be returned. | Phase 5 |
 | G-10 | Required citations come from the engine, not from retrieval. | Phase 5 |
 | G-11 | The verifier can veto but never upgrade; no decisive outcome reaches the ledger without passing every verifier check. | Phase 6 |

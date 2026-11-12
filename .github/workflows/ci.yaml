@@ -49,6 +49,9 @@ jobs:
       - name: docs-check (committed schemas)
         run: uv run python scripts/check_schemas.py
 
+      - name: docs-check (source register)
+        run: uv run python scripts/generate_source_register.py
+
   unit-and-property:
     name: unit + property tests
     runs-on: ubuntu-24.04

@@ -15,7 +15,7 @@ from wageguard.evidence.manifest import (
     load_source_manifest,
 )
 
-FIXTURE = Path(__file__).resolve().parents[3] / "_fixtures" / "corpus" / "manifest.yaml"
+FIXTURE = Path(__file__).resolve().parents[2] / "_fixtures" / "corpus" / "manifest.yaml"
 
 
 def _write(tmp_path: Path, name: str, body: str) -> Path:

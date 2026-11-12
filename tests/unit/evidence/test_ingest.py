@@ -11,15 +11,19 @@ from wageguard.domain.identifiers import EmbeddingModelId
 from wageguard.evidence.embedder import DeterministicFakeEmbedder
 from wageguard.evidence.ingest import IngestResult, ingest
 from wageguard.evidence.manifest import load_source_manifest
-from wageguard.evidence.snapshot import write_snapshot
+from wageguard.evidence.snapshot import write_snapshot_for_source
 from wageguard.evidence.store import InMemoryPassageStore
 
-MANIFEST = Path(__file__).resolve().parents[3] / "_fixtures" / "corpus" / "manifest.yaml"
-HTML = Path(__file__).resolve().parents[3] / "_fixtures" / "corpus" / "synthetic.html"
+MANIFEST = Path(__file__).resolve().parents[2] / "_fixtures" / "corpus" / "manifest.yaml"
+HTML = Path(__file__).resolve().parents[2] / "_fixtures" / "corpus" / "synthetic.html"
 
 
-def _seed_snapshot(tmp_path: Path, data: bytes) -> Path:
-    return write_snapshot(tmp_path, data, suffix=".html")
+def _seed_snapshot(tmp_path: Path, data: bytes) -> None:
+    # Writes the content-addressed bytes file plus a `<source_key>.current`
+    # pointer so the orchestrator can resolve source_key -> snapshot.
+    from wageguard.domain.identifiers import SourceKey
+
+    write_snapshot_for_source(tmp_path, SourceKey("synthetic_src"), data, suffix=".html")
 
 
 def test_initial_ingest_creates_version_one(tmp_path: Path) -> None:

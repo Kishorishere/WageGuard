@@ -77,9 +77,7 @@ def _check_unique_keys(specs: tuple[SourceSpec, ...]) -> None:
 def _require_str(row: Mapping[str, object], key: str, idx: int) -> str:
     v = row.get(key)
     if not isinstance(v, str) or not v:
-        raise ConfigurationError(
-            f"source[{idx}].{key}: required, must be a non-empty string"
-        )
+        raise ConfigurationError(f"source[{idx}].{key}: required, must be a non-empty string")
     return v
 
 
