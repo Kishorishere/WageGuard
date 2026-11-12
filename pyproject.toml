@@ -88,6 +88,9 @@ ignore = [
 # returns. Splitting into helpers (per type) would hide the exhaustive
 # "every type is handled, else raise" structure the ledger depends on.
 "src/wageguard/ledger/canonical.py" = ["PLR0911", "PLR0912"]
+# scoring.classify is a case table (spec §14.3). The branches ARE the
+# table; splitting them hides the exhaustive classification structure.
+"src/wageguard/evaluation/scoring.py" = ["PLR0911"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["wageguard"]

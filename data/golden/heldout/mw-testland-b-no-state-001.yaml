@@ -1,0 +1,22 @@
+case_id: "mw-testland-b-no-state-001"
+split: "heldout"
+category: "state_rule_absent_federal_applies"
+description: "TESTLAND-B has no state rule; federal ($7.00) controls; pay $7.00 passes."
+input:
+  check: "minimum_wage"
+  work_state: "TESTLAND-B"
+  work_date: "2024-07-01"
+  pay_rate: "7.00"
+  pay_basis: "hourly"
+  worker_category: "general"
+expected:
+  outcome: "PASS"
+  reason_codes: []
+  missing_fields: []
+  required_citations: []
+  forbidden_citations: []
+label_basis:
+  rule_id: "us.mw"
+  passage_ids: []
+  rationale: "TESTLAND-B has no state minimum; synthetic federal is $7.00 on 2024-07-01; pay of $7.00 meets it."
+answerable: true

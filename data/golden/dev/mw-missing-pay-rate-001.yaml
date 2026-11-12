@@ -1,0 +1,23 @@
+case_id: "mw-missing-pay-rate-001"
+split: "dev"
+category: "missing_required_fact"
+description: "Request lacks pay_rate; expect CANNOT_DETERMINE naming pay_rate."
+input:
+  check: "minimum_wage"
+  work_state: "TESTLAND-A"
+  work_date: "2024-07-01"
+  pay_basis: "hourly"
+  worker_category: "general"
+expected:
+  outcome: "CANNOT_DETERMINE"
+  reason_codes:
+    - "missing_required_fact"
+  missing_fields:
+    - "pay_rate"
+  required_citations: []
+  forbidden_citations: []
+label_basis:
+  rule_id: null
+  passage_ids: []
+  rationale: "pay_rate is a required fact for the minimum_wage check (spec §8.4)."
+answerable: false

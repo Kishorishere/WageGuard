@@ -1,0 +1,22 @@
+case_id: "mw-testland-a-boundary-below-001"
+split: "dev"
+category: "threshold_boundary"
+description: "Pay $0.01 below the TESTLAND-A controlling rate expects FLAG."
+input:
+  check: "minimum_wage"
+  work_state: "TESTLAND-A"
+  work_date: "2024-07-01"
+  pay_rate: "15.99"
+  pay_basis: "hourly"
+  worker_category: "general"
+expected:
+  outcome: "FLAG"
+  reason_codes: []
+  missing_fields: []
+  required_citations: []
+  forbidden_citations: []
+label_basis:
+  rule_id: "tla.mw.v2"
+  passage_ids: []
+  rationale: "Synthetic TESTLAND-A rate is $16.00 effective 2024-07-01; pay of $15.99 is one cent below, so FLAG."
+answerable: true

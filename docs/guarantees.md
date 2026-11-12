@@ -35,6 +35,8 @@ The README copies rows out of this file. `make docs-check` runs the script.
 | G-16 | Concurrent appends never fork the chain. | `tests/unit/ledger/test_ledger.py::TestConcurrentAppend::test_parallel_appends_produce_linear_chain` |
 | G-17 | Exact replay of engine-only outcomes is byte-identical to the original record. | `tests/unit/ledger/test_replay.py::test_exact_replay_byte_identical_for_engine_only` |
 | G-18 | Replay writes a new record; the original is never mutated. | `tests/unit/ledger/test_replay.py::test_replay_writes_a_new_record_and_never_mutates_original` |
+| G-19 | Golden metrics are reported with numerators, denominators, and Wilson 95% intervals; `non_abstained == 0` is reported as undefined, not zero. | `tests/unit/evaluation/test_metrics.py::test_non_abstained_zero_yields_undefined_confidently_wrong_rate` |
+| G-20 | The held-out split is not read by any tuning script; every held-out run is logged. | `tests/unit/evaluation/test_cases.py::test_committed_splits_have_no_overlap` |
 
 ---
 
@@ -46,8 +48,6 @@ phase that implements and tests it.
 | ID | Guarantee | Target phase |
 |----|-----------|--------------|
 | G-07 | The highest applicable rate controls; this is sourced from an official passage. | Phase 3 (engine) + Phase 4 (sourcing) |
-| G-19 | Golden metrics are reported with numerators, denominators, and Wilson 95% intervals; `non_abstained == 0` is reported as undefined, not zero. | Phase 8 |
-| G-20 | The held-out split is not read by any tuning script; every held-out run is logged. | Phase 8 |
 | G-21 | Exemption `PASS` is unreachable without the documented conditions (property-tested). | Phase 9 |
 | G-22 | Every row of the fault matrix produces a Fault record and no decision record. | Phase 10 |
 | G-23 | The CLI and API share one service and return identical results for the same input. | Phase 11 |
