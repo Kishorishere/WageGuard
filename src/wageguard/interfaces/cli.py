@@ -56,19 +56,16 @@ def _ledger_show(args: argparse.Namespace) -> int:
     if not matches:
         print(f"no records for decision_id={args.decision_id!r}", file=sys.stderr)
         return EXIT_UNEXPECTED
-    for r in matches:
-        print(
-            json.dumps(
-                {
-                    "decision_id": r.header.decision_id,
-                    "sequence_no": r.header.sequence_no,
-                    "record_kind": r.header.record_kind.value,
-                    "record_hash": r.record_hash,
-                },
-                indent=None,
-                separators=(",", ":"),
-            )
-        )
+    payload = [
+        {
+            "decision_id": r.header.decision_id,
+            "sequence_no": r.header.sequence_no,
+            "record_kind": r.header.record_kind.value,
+            "record_hash": r.record_hash,
+        }
+        for r in matches
+    ]
+    print(json.dumps(payload, indent=2))
     return EXIT_OK
 
 

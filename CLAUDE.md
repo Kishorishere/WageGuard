@@ -117,15 +117,14 @@ words; copying the spec document is not an ADR.
 
 ---
 
-## 10. Small commits, honest commit messages
+## 10. Small commits, feature-based messages
 
-- Imperative subject under 72 characters.
-- Prefix with `feat:`, `fix:`, `test:`, `docs:`, `refactor:`, or `chore:`.
-- The body says *why*, not *what*.
+- One imperative headline, 60 characters or less.
+- Up to five short bullets in the body — what the commit adds, no
+  narrative prose, no reference to phases or spec sections.
+- No AI co-author trailers, no "Generated with" footers.
 - No "fix typo" chains; squash locally first.
 - Never commit secrets, real worker data, or generated noise.
-- Attribution footer (per harness instructions):
-  `Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>`.
 
 ---
 

@@ -35,9 +35,11 @@ If a hook fails, fix the underlying issue; do not pass `--no-verify`.
 ## Branches, commits, PRs
 
 - One logical change per PR.
-- Conventional-commit prefix: `feat: | fix: | test: | docs: | refactor: | chore:`.
-- Subject under 72 chars, imperative mood. Body says *why*.
-- Tests-first phases (1, 2, 3, 6, 7): the red commit lands before the green one.
+- Commit style: one imperative headline (60 chars or less), then up
+  to five short bullets naming what the commit adds.
+- No conventional-commit prefix, no phase / spec references, no AI
+  co-author trailers.
+- Red commit lands before the green one when writing tests first.
 - ADR first for non-obvious choices (`docs/adr/NNNN-title.md`).
 
 ## Guarantees

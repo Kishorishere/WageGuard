@@ -51,6 +51,9 @@ class ReasonCode(StrEnum):
     FAULT_VERIFICATION_QUOTE_MISMATCH = "fault_quote_mismatch"
     FAULT_VERIFICATION_OUTCOME_CONTRADICTION = "fault_outcome_contradiction"
     FAULT_MISSING_REQUIRED_CITATION = "fault_missing_required_citation"
+    FAULT_VERIFICATION_UNCITED_CLAIM = "fault_verification_uncited_claim"
+    FAULT_VERIFICATION_NO_CLAIMS_ON_DECISIVE = "fault_verification_no_claims_on_decisive"
+    FAULT_VERIFICATION_NUMERIC_MISMATCH = "fault_verification_numeric_mismatch"
     FAULT_LEDGER_APPEND_FAILED = "fault_ledger_append_failed"
     FAULT_LEDGER_CHAIN_BROKEN = "fault_ledger_chain_broken"
     FAULT_CONFIGURATION_ERROR = "fault_configuration_error"
@@ -85,6 +88,9 @@ _CATEGORY: Mapping[ReasonCode, ReasonCategory] = MappingProxyType(
         ReasonCode.FAULT_VERIFICATION_QUOTE_MISMATCH: ReasonCategory.FAULT,
         ReasonCode.FAULT_VERIFICATION_OUTCOME_CONTRADICTION: ReasonCategory.FAULT,
         ReasonCode.FAULT_MISSING_REQUIRED_CITATION: ReasonCategory.FAULT,
+        ReasonCode.FAULT_VERIFICATION_UNCITED_CLAIM: ReasonCategory.FAULT,
+        ReasonCode.FAULT_VERIFICATION_NO_CLAIMS_ON_DECISIVE: ReasonCategory.FAULT,
+        ReasonCode.FAULT_VERIFICATION_NUMERIC_MISMATCH: ReasonCategory.FAULT,
         ReasonCode.FAULT_LEDGER_APPEND_FAILED: ReasonCategory.FAULT,
         ReasonCode.FAULT_LEDGER_CHAIN_BROKEN: ReasonCategory.FAULT,
         ReasonCode.FAULT_CONFIGURATION_ERROR: ReasonCategory.FAULT,
@@ -142,6 +148,13 @@ _TEMPLATE: Mapping[ReasonCode, str] = MappingProxyType(
         ),
         ReasonCode.FAULT_MISSING_REQUIRED_CITATION: (
             "A passage required by the engine was not cited in the explanation."
+        ),
+        ReasonCode.FAULT_VERIFICATION_UNCITED_CLAIM: "A claim appeared without any citation.",
+        ReasonCode.FAULT_VERIFICATION_NO_CLAIMS_ON_DECISIVE: (
+            "A decisive outcome produced no claims."
+        ),
+        ReasonCode.FAULT_VERIFICATION_NUMERIC_MISMATCH: (
+            "An explanation stated a dollar figure not in the engine's numeric context."
         ),
         ReasonCode.FAULT_LEDGER_APPEND_FAILED: "Ledger append did not durably commit.",
         ReasonCode.FAULT_LEDGER_CHAIN_BROKEN: "Ledger chain linkage is broken.",

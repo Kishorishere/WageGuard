@@ -135,7 +135,7 @@ def verify(
         if not claim.citations:
             failures.append(
                 VerificationFailure(
-                    reason_code=ReasonCode.FAULT_LLM_MALFORMED_OUTPUT,
+                    reason_code=ReasonCode.FAULT_VERIFICATION_UNCITED_CLAIM,
                     detail=f"claim[{ci}] has no citations (uncited claim)",
                 )
             )
@@ -144,7 +144,7 @@ def verify(
     if not draft.insufficient_evidence and not draft.claims:
         failures.append(
             VerificationFailure(
-                reason_code=ReasonCode.FAULT_LLM_MALFORMED_OUTPUT,
+                reason_code=ReasonCode.FAULT_VERIFICATION_NO_CLAIMS_ON_DECISIVE,
                 detail="decisive outcome produced no claims / empty citations",
             )
         )
@@ -163,7 +163,7 @@ def verify(
             if _canonical(value) not in engine_figures:
                 failures.append(
                     VerificationFailure(
-                        reason_code=ReasonCode.FAULT_LLM_MALFORMED_OUTPUT,
+                        reason_code=ReasonCode.FAULT_VERIFICATION_NUMERIC_MISMATCH,
                         detail=(
                             f"figure ${value} in explanation text is not in the "
                             f"engine's numeric context (allowed: "
